@@ -1,0 +1,108 @@
+'use server';
+
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { loginSchema } from '@/lib/validations';
+import type { ActionResult } from '@/types';
+
+export async function signIn(formData: {
+  email: string;
+  password: string;
+}): Promise<ActionResult> {
+  const parsed = loginSchema.safeParse(formData);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return { success: false, error: 'Invalid email or password. Please try again.' };
+  }
+
+  // Get user's role for redirect
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Authentication failed' };
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const redirectPath = profile?.role === 'business' ? '/business' : '/customer';
+  redirect(redirectPath);
+}
+
+export async function signInAsDemo(role: 'customer' | 'business'): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const email = role === 'customer' ? 'customer@replate.demo' : 'business@replate.demo';
+  const password = 'demo123456';
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error: `Demo account not set up. Please create ${email} in Supabase Auth first.`,
+    };
+  }
+
+  redirect(role === 'business' ? '/business' : '/customer');
+}
+
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/login');
+}
+
+export async function getCurrentUser() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  return profile;
+}
+
+export async function getCurrentBusiness() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('*')
+    .eq('owner_id', user.id)
+    .single();
+
+  return business;
+}
