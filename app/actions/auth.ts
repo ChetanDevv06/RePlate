@@ -134,3 +134,110 @@ export async function getCurrentBusiness() {
 
   return business;
 }
+
+export async function updateUserProfile(formData: {
+  name: string;
+  avatar_url?: string | null;
+}): Promise<ActionResult<{ name: string; avatar_url: string | null }>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const trimmedName = formData.name?.trim();
+  if (!trimmedName || trimmedName.length < 2) {
+    return { success: false, error: 'Name must be at least 2 characters' };
+  }
+
+  const { data: updatedProfile, error } = await supabase
+    .from('profiles')
+    .update({
+      name: trimmedName,
+      avatar_url: formData.avatar_url || null,
+    })
+    .eq('id', user.id)
+    .select('name, avatar_url')
+    .single();
+
+  if (error) {
+    return { success: false, error: 'Failed to update profile. Please try again.' };
+  }
+
+  return { success: true, data: updatedProfile };
+}
+
+export async function updateUserPassword(formData: {
+  password: string;
+}): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  if (!formData.password || formData.password.length < 6) {
+    return { success: false, error: 'Password must be at least 6 characters' };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: formData.password,
+  });
+
+  if (error) {
+    return { success: false, error: error.message || 'Failed to update password' };
+  }
+
+  return { success: true };
+}
+
+export async function updateBusinessProfile(formData: {
+  name: string;
+  location: string;
+  address?: string;
+  contact?: string;
+}): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const trimmedName = formData.name?.trim();
+  const trimmedLocation = formData.location?.trim();
+
+  if (!trimmedName || trimmedName.length < 2) {
+    return { success: false, error: 'Business name must be at least 2 characters' };
+  }
+  if (!trimmedLocation || trimmedLocation.length < 2) {
+    return { success: false, error: 'Location is required' };
+  }
+
+  const { error } = await supabase
+    .from('businesses')
+    .update({
+      name: trimmedName,
+      location: trimmedLocation,
+      address: formData.address?.trim() || null,
+      contact: formData.contact?.trim() || null,
+    })
+    .eq('owner_id', user.id);
+
+  if (error) {
+    return { success: false, error: 'Failed to update business details' };
+  }
+
+  return { success: true };
+}
