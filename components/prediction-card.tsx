@@ -1,19 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { predictionInputSchema, type PredictionInputFormData } from '@/lib/validations';
 import { calculateSurplusRisk, getRiskIndicator } from '@/lib/prediction';
-import { RECOMMENDED_LISTING_TIMES } from '@/lib/constants';
 import type { PredictionResult } from '@/types';
 import { cn } from '@/lib/utils';
-import { Brain, ChevronRight } from 'lucide-react';
+import { Brain, ChevronRight, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PredictionCardProps {
   originalPrice?: number;
@@ -21,19 +18,27 @@ interface PredictionCardProps {
 }
 
 export function PredictionCard({ originalPrice, onApplyRecommendation }: PredictionCardProps) {
+  const [avgSales, setAvgSales] = useState<string>('');
+  const [currentStock, setCurrentStock] = useState<string>('');
+  const [expectedDemand, setExpectedDemand] = useState<string>('');
   const [result, setResult] = useState<PredictionResult | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<PredictionInputFormData>({
-    resolver: zodResolver(predictionInputSchema),
-    defaultValues: { average_daily_sales: 0, current_stock: 0, expected_demand: 0 },
-  });
+  const handleAnalyze = () => {
+    const stockNum = Number(currentStock);
+    const avgNum = Number(avgSales) || 0;
+    const demandNum = Number(expectedDemand) || 0;
 
-  const onSubmit = (data: PredictionInputFormData) => {
-    const prediction = calculateSurplusRisk(data);
+    if (!currentStock || stockNum <= 0) {
+      toast.info('Enter your current stock to calculate surplus risk');
+      return;
+    }
+
+    const prediction = calculateSurplusRisk({
+      average_daily_sales: avgNum,
+      current_stock: stockNum,
+      expected_demand: demandNum,
+    });
+
     setResult(prediction);
   };
 
@@ -59,61 +64,58 @@ export function PredictionCard({ originalPrice, onApplyRecommendation }: Predict
             <Brain className="size-4 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-base">RePlate Smart Prediction</CardTitle>
-            <CardDescription className="text-xs">Rule-based surplus risk analysis</CardDescription>
+            <CardTitle className="text-base flex items-center gap-1.5">
+              Smart Predictor
+              <span className="text-[10px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                Optional
+              </span>
+            </CardTitle>
+            <CardDescription className="text-xs">Estimate surplus risk & discount</CardDescription>
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <Label htmlFor="avg-sales" className="text-xs text-muted-foreground mb-1 block">
-                Avg. Daily Sales
+              <Label htmlFor="pred-avg-sales" className="text-xs text-muted-foreground mb-1 block">
+                Avg. Sales
               </Label>
               <Input
-                id="avg-sales"
+                id="pred-avg-sales"
                 type="number"
-                min="0"
                 placeholder="12"
                 className="h-8 text-sm"
-                {...register('average_daily_sales', { valueAsNumber: true })}
+                value={avgSales}
+                onChange={(e) => setAvgSales(e.target.value)}
               />
-              {errors.average_daily_sales && (
-                <p className="text-xs text-destructive mt-0.5">{errors.average_daily_sales.message}</p>
-              )}
             </div>
             <div>
-              <Label htmlFor="current-stock" className="text-xs text-muted-foreground mb-1 block">
-                Current Stock
+              <Label htmlFor="pred-current-stock" className="text-xs text-muted-foreground mb-1 block">
+                Stock
               </Label>
               <Input
-                id="current-stock"
+                id="pred-current-stock"
                 type="number"
-                min="1"
                 placeholder="20"
                 className="h-8 text-sm"
-                {...register('current_stock', { valueAsNumber: true })}
+                value={currentStock}
+                onChange={(e) => setCurrentStock(e.target.value)}
               />
-              {errors.current_stock && (
-                <p className="text-xs text-destructive mt-0.5">{errors.current_stock.message}</p>
-              )}
             </div>
             <div>
-              <Label htmlFor="expected-demand" className="text-xs text-muted-foreground mb-1 block">
-                Expected Demand
+              <Label htmlFor="pred-demand" className="text-xs text-muted-foreground mb-1 block">
+                Exp. Demand
               </Label>
               <Input
-                id="expected-demand"
+                id="pred-demand"
                 type="number"
-                min="0"
                 placeholder="8"
                 className="h-8 text-sm"
-                {...register('expected_demand', { valueAsNumber: true })}
+                value={expectedDemand}
+                onChange={(e) => setExpectedDemand(e.target.value)}
               />
-              {errors.expected_demand && (
-                <p className="text-xs text-destructive mt-0.5">{errors.expected_demand.message}</p>
-              )}
             </div>
           </div>
 
@@ -121,11 +123,11 @@ export function PredictionCard({ originalPrice, onApplyRecommendation }: Predict
             type="button"
             size="sm"
             variant="outline"
-            className="w-full text-xs h-8"
-            onClick={handleSubmit(onSubmit)}
+            className="w-full text-xs h-8 hover:bg-primary/5 hover:border-primary/40"
+            onClick={handleAnalyze}
           >
+            <Sparkles className="size-3.5 mr-1 text-primary" />
             Analyze Surplus Risk
-            <ChevronRight className="size-3 ml-1" />
           </Button>
         </div>
 
@@ -144,7 +146,7 @@ export function PredictionCard({ originalPrice, onApplyRecommendation }: Predict
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Recommended discount</span>
-                  <span className="font-semibold">{Math.round(result.recommended_discount * 100)}%</span>
+                  <span className="font-semibold text-primary">{Math.round(result.recommended_discount * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">List food</span>
@@ -162,11 +164,12 @@ export function PredictionCard({ originalPrice, onApplyRecommendation }: Predict
 
               {onApplyRecommendation && originalPrice && (
                 <Button
+                  type="button"
                   size="sm"
-                  className="w-full h-8 text-xs mt-2"
+                  className="w-full h-8 text-xs mt-2 bg-primary hover:bg-primary/90"
                   onClick={handleApply}
                 >
-                  Apply Recommendation
+                  Apply Suggested Price
                 </Button>
               )}
             </div>
