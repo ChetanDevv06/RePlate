@@ -41,6 +41,7 @@ import {
 import { formatCurrency, ESTIMATED_WEIGHT_PER_MEAL_KG } from '@/lib/constants';
 import { formatWeight } from '@/lib/calculations';
 import { signOut, updateUserProfile, updateUserPassword } from '@/app/actions/auth';
+import { requestAccountDeletion } from '@/app/actions/compliance';
 import type { Profile } from '@/types';
 
 interface CustomerProfileViewProps {
@@ -66,6 +67,8 @@ export function CustomerProfileView({ profile: initialProfile, stats }: Customer
   const [helpOpen, setHelpOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
 
   // Form states
   const [editName, setEditName] = useState(profile.name);
@@ -478,6 +481,24 @@ export function CustomerProfileView({ profile: initialProfile, stats }: Customer
             </div>
             <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
           </button>
+
+          {/* Account Deletion Request */}
+          <button
+            type="button"
+            onClick={() => setDeleteAccountOpen(true)}
+            className="w-full p-4 flex items-center justify-between hover:bg-muted/40 transition-colors text-left group"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="size-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <ShieldCheck className="size-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm text-destructive">Request Account Deletion</p>
+                <p className="text-xs text-muted-foreground">Manage personal data erasure under DPDP Act</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+          </button>
         </div>
       </section>
 
@@ -787,6 +808,64 @@ export function CustomerProfileView({ profile: initialProfile, stats }: Customer
           </div>
           <DialogFooter>
             <Button onClick={() => setTermsOpen(false)}>I Understand</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Account Deletion Request Dialog */}
+      <Dialog open={deleteAccountOpen} onOpenChange={setDeleteAccountOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Request Account Deletion</DialogTitle>
+            <DialogDescription className="text-xs">
+              Personal Data Erasure under the Digital Personal Data Protection Act, 2023.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-xs text-muted-foreground">
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 space-y-1">
+              <p className="font-semibold">Statutory Retention Notice:</p>
+              <p className="text-[11px] leading-relaxed">
+                Upon confirmation, your profile and authentication access will be permanently deactivated. Please note that transactional, financial, and tax audit records are retained for statutory periods as mandated by Indian legal requirements.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="delete-reason" className="text-xs text-foreground font-medium">
+                Reason for leaving (Optional)
+              </Label>
+              <Input
+                id="delete-reason"
+                placeholder="Let us know why you are closing your account..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteAccountOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isPending}
+              onClick={() => {
+                startTransition(async () => {
+                  const result = await requestAccountDeletion({ reason: deleteReason });
+                  if (result.success) {
+                    toast.success('Account deletion request registered. A support representative will process it shortly.');
+                    setDeleteAccountOpen(false);
+                  } else {
+                    toast.error(result.error || 'Failed to submit request');
+                  }
+                });
+              }}
+            >
+              {isPending ? 'Submitting...' : 'Confirm Deletion Request'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

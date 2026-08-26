@@ -35,6 +35,7 @@ export function ListingForm({ initialData, mode = 'create', onSubmit: onSubmitPr
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
+  const [declarationAccepted, setDeclarationAccepted] = useState(mode === 'edit');
 
   const now = new Date();
   const defaultPickupStart = toDatetimeLocal(addHours(now, 2));
@@ -47,7 +48,7 @@ export function ListingForm({ initialData, mode = 'create', onSubmit: onSubmitPr
     setValue,
     formState: { errors },
   } = useForm<CreateListingFormData>({
-    resolver: zodResolver(createListingSchema),
+    resolver: zodResolver(createListingSchema as any),
     defaultValues: {
       name: initialData?.name ?? '',
       original_price: initialData?.original_price !== undefined ? Number(initialData.original_price) : undefined,
@@ -60,6 +61,9 @@ export function ListingForm({ initialData, mode = 'create', onSubmit: onSubmitPr
         ? toDatetimeLocal(new Date(initialData.pickup_deadline))
         : defaultPickupEnd,
       description: initialData?.description ?? '',
+      dietary_type: (initialData as any)?.dietary_type || 'veg',
+      allergens: (initialData as any)?.allergens || '',
+      food_handling_notes: (initialData as any)?.food_handling_notes || '',
     },
   });
 
@@ -91,6 +95,11 @@ export function ListingForm({ initialData, mode = 'create', onSubmit: onSubmitPr
   };
 
   const onSubmit = async (data: CreateListingFormData) => {
+    if (mode === 'create' && !declarationAccepted) {
+      toast.error('You must confirm the mandatory Food Safety Declaration before publishing.');
+      return;
+    }
+
     startTransition(async () => {
       try {
         let image_url: string | undefined;
@@ -291,6 +300,73 @@ export function ListingForm({ initialData, mode = 'create', onSubmit: onSubmitPr
                   />
                   {errors.pickup_deadline && <p className="text-xs text-destructive">{errors.pickup_deadline.message}</p>}
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Food Safety & Compliance */}
+          <Card className="border-emerald-500/20 bg-emerald-50/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <span className="text-primary">🛡️</span>
+                Food Safety & Compliance
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dietary_type">Dietary Type *</Label>
+                  <select
+                    id="dietary_type"
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    {...register('dietary_type')}
+                  >
+                    <option value="veg">🟢 Pure Vegetarian (Veg)</option>
+                    <option value="non_veg">🔴 Non-Vegetarian</option>
+                    <option value="vegan">🌱 100% Vegan</option>
+                    <option value="egg">🟡 Contains Egg</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="allergens">Allergen Information</Label>
+                  <Input
+                    id="allergens"
+                    placeholder="e.g. Contains gluten, dairy, nuts"
+                    {...register('allergens')}
+                  />
+                  <p className="text-[11px] text-muted-foreground">Disclose major allergens for customer safety.</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="food_handling_notes">Storage & Consumption Notes</Label>
+                <Input
+                  id="food_handling_notes"
+                  placeholder="e.g. Best consumed within 2 hours of pickup. Keep refrigerated."
+                  {...register('food_handling_notes')}
+                />
+              </div>
+
+              {/* Mandatory Food Safety Declaration */}
+              <div className="pt-2 border-t border-emerald-500/20">
+                <label className="flex items-start gap-3 p-3 rounded-xl bg-card border border-emerald-500/30 cursor-pointer hover:bg-white/80 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={declarationAccepted}
+                    onChange={(e) => setDeclarationAccepted(e.target.checked)}
+                    className="size-4 mt-0.5 accent-primary rounded cursor-pointer shrink-0"
+                    required={mode === 'create'}
+                  />
+                  <div className="text-xs space-y-1">
+                    <p className="font-semibold text-foreground">
+                      Mandatory Food Safety Declaration <span className="text-destructive">*</span>
+                    </p>
+                    <p className="text-muted-foreground leading-relaxed text-[11px]">
+                      I confirm that this food has been prepared, handled, stored and packaged in accordance with applicable food-safety requirements and FSSAI standards, is wholesome and fit for consumption, and is being offered within its safe-consumption period.
+                    </p>
+                  </div>
+                </label>
               </div>
             </CardContent>
           </Card>

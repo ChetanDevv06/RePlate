@@ -106,6 +106,13 @@ export function ReserveSection({ listing, businessName }: ReserveSectionProps) {
       <p className="text-xs text-muted-foreground text-center">
         Show your pickup code at the counter. No payment required online.
       </p>
+
+      <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+        By confirming this reservation, you agree to RePlate&apos;s{' '}
+        <a href="/terms" target="_blank" className="text-primary underline">Terms of Service</a>,{' '}
+        <a href="/food-safety" target="_blank" className="text-primary underline">Food Safety Policy</a>, and{' '}
+        <a href="/refunds" target="_blank" className="text-primary underline">Refund Policy</a>.
+      </p>
     </div>
   );
 }

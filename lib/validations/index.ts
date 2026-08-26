@@ -29,6 +29,10 @@ export const createListingSchema = z.object({
   pickup_start: z.string().min(1, 'Pickup start time is required'),
   pickup_deadline: z.string().min(1, 'Pickup deadline is required'),
   description: z.string().max(500, 'Description must be under 500 characters').optional(),
+  dietary_type: z.enum(['veg', 'non_veg', 'vegan', 'egg']).optional(),
+  allergens: z.string().max(200, 'Allergen notes under 200 characters').optional(),
+  food_handling_notes: z.string().max(300, 'Storage notes under 300 characters').optional(),
+  food_safety_declaration: z.boolean().optional(),
 }).refine((data) => data.discounted_price < data.original_price, {
   message: 'Discounted price must be less than original price',
   path: ['discounted_price'],

@@ -38,6 +38,9 @@ export function EditListingClient({ listing }: EditListingClientProps) {
         ...listing,
         description: listing.description ?? undefined,
         image_url: listing.image_url ?? undefined,
+        allergens: listing.allergens ?? undefined,
+        food_handling_notes: listing.food_handling_notes ?? undefined,
+        dietary_type: listing.dietary_type ?? 'veg',
       }}
       onSubmit={handleSubmit}
     />

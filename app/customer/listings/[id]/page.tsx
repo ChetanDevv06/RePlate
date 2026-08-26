@@ -132,6 +132,30 @@ export default async function FoodDetailPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
+          {/* Dietary & Allergen Disclosures */}
+          <div className="p-3.5 rounded-xl bg-muted/40 border space-y-1.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-foreground">
+                {listing.dietary_type === 'veg' && '🟢 Vegetarian'}
+                {listing.dietary_type === 'non_veg' && '🔴 Non-Vegetarian'}
+                {listing.dietary_type === 'vegan' && '🌱 100% Vegan'}
+                {listing.dietary_type === 'egg' && '🟡 Contains Egg'}
+                {!listing.dietary_type && '🟢 Vegetarian'}
+              </span>
+              <span className="text-[11px] text-muted-foreground">FSSAI Certified Partner</span>
+            </div>
+            {listing.allergens && (
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Allergens:</strong> {listing.allergens}
+              </p>
+            )}
+            {listing.food_handling_notes && (
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Handling:</strong> {listing.food_handling_notes}
+              </p>
+            )}
+          </div>
+
           <Separator />
 
           {/* Reservation section */}

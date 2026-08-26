@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { EmptyState } from '@/components/empty-state';
 import { OrderStatusBadge } from '@/components/order-status-badge';
+import { ReportIssueDialog } from '@/components/report-issue-dialog';
 import { formatCurrency } from '@/lib/constants';
 import { ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
@@ -109,9 +110,23 @@ export default async function MyOrdersPage() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Order ID: <code className="font-mono">{order.order_code}</code></span>
-                  <span>{format(new Date(order.created_at), 'MMM d, h:mm a')}</span>
+                <div className="pt-2 border-t flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span>Order ID: <code className="font-mono text-foreground font-semibold">{order.order_code}</code></span>
+                    <span>·</span>
+                    <span>{format(new Date(order.created_at), 'MMM d, h:mm a')}</span>
+                  </div>
+
+                  <ReportIssueDialog
+                    orderId={order.id}
+                    orderCode={order.order_code}
+                    businessName={listing?.business?.name}
+                    triggerButton={
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5 px-2">
+                        Report Issue
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             );

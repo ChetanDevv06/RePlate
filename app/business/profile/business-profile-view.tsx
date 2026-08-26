@@ -216,7 +216,7 @@ export function BusinessProfileView({
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <ShieldCheck className="size-4 text-primary shrink-0" />
-                  <span>Verified RePlate Food Partner</span>
+                  <span>FSSAI Status: <strong className="text-foreground">Demo / Pending Verification</strong></span>
                 </div>
               </div>
             </div>

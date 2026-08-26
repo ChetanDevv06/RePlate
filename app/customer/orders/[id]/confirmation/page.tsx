@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { CheckCircle, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ReportIssueDialog } from '@/components/report-issue-dialog';
 import { formatCurrency } from '@/lib/constants';
 import { format } from 'date-fns';
 
@@ -94,19 +95,37 @@ export default async function ConfirmationPage({
       </div>
 
       {/* Actions */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         <Button variant="outline" asChild>
           <Link href="/customer/orders">
             <ShoppingBag className="size-4 mr-2" />
             My Orders
           </Link>
         </Button>
-        <Button asChild className="bg-primary hover:bg-primary/90">
+        <Button asChild>
           <Link href="/customer/explore">
-            <ArrowLeft className="size-4 mr-2" />
             Explore More
           </Link>
         </Button>
+      </div>
+
+      {/* Safety & Issue Redressal */}
+      <div className="pt-4 border-t border-border/70 flex flex-col items-center gap-3 text-center">
+        <ReportIssueDialog
+          orderId={id}
+          orderCode={orderCode}
+          businessName={businessName}
+        />
+        <p className="text-[11px] text-muted-foreground">
+          Governed by RePlate&apos;s{' '}
+          <Link href="/food-safety" className="text-primary underline">
+            Food Safety Policy
+          </Link>{' '}
+          and{' '}
+          <Link href="/refunds" className="text-primary underline">
+            Refund Policy
+          </Link>.
+        </p>
       </div>
     </div>
   );

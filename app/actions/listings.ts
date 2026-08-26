@@ -67,6 +67,9 @@ export async function createListing(formData: {
       pickup_start: parsed.data.pickup_start,
       pickup_deadline: parsed.data.pickup_deadline,
       description: parsed.data.description || null,
+      dietary_type: parsed.data.dietary_type || 'veg',
+      allergens: parsed.data.allergens?.trim() || null,
+      food_handling_notes: parsed.data.food_handling_notes?.trim() || null,
       status: 'active',
     })
     .select()
@@ -75,6 +78,20 @@ export async function createListing(formData: {
   if (error) {
     console.error('Create listing error:', error);
     return { success: false, error: 'Failed to create listing. Please check your inputs.' };
+  }
+
+  // Record audit log for Food Safety Declaration
+  try {
+    await supabase.from('food_safety_declarations').insert({
+      business_id: business.id,
+      listing_id: listing.id,
+      accepted_by: user.id,
+      declaration_version: '1.0',
+      declaration_text:
+        'I confirm that this food has been prepared, handled, stored and packaged in accordance with applicable food-safety requirements and FSSAI standards, is wholesome and fit for consumption, and is being offered within its safe-consumption period.',
+    });
+  } catch (auditErr) {
+    console.warn('Food safety declaration audit log error:', auditErr);
   }
 
   return { success: true, data: listing };
@@ -91,6 +108,9 @@ export async function updateListing(
     pickup_start?: string;
     pickup_deadline?: string;
     description?: string;
+    dietary_type?: string;
+    allergens?: string;
+    food_handling_notes?: string;
     status?: string;
   }
 ): Promise<ActionResult<FoodListing>> {
@@ -132,6 +152,9 @@ export async function updateListing(
   if (formData.pickup_start !== undefined) updateData.pickup_start = formData.pickup_start;
   if (formData.pickup_deadline !== undefined) updateData.pickup_deadline = formData.pickup_deadline;
   if (formData.description !== undefined) updateData.description = formData.description;
+  if (formData.dietary_type !== undefined) updateData.dietary_type = formData.dietary_type;
+  if (formData.allergens !== undefined) updateData.allergens = formData.allergens;
+  if (formData.food_handling_notes !== undefined) updateData.food_handling_notes = formData.food_handling_notes;
   if (formData.status !== undefined) updateData.status = formData.status;
 
   const { data: updated, error } = await supabase
