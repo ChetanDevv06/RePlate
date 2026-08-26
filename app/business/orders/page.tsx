@@ -31,7 +31,7 @@ export default async function BusinessOrdersPage() {
         discounted_price,
         business_id
       ),
-      customer:profiles!orders_customer_id_fkey(name, email)
+      customer:profiles(name, email)
     `)
     .eq('listing.business_id', business.id)
     .order('created_at', { ascending: false });

@@ -17,18 +17,35 @@ export default async function BusinessDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: business } = await supabase
+  let { data: business } = await supabase
     .from('businesses')
     .select('*')
     .eq('owner_id', user.id)
-    .single();
+    .maybeSingle();
+
+  // If business record is missing for this business owner, create a default one
+  if (!business) {
+    const { data: newBusiness } = await supabase
+      .from('businesses')
+      .insert({
+        owner_id: user.id,
+        name: 'RUAS Campus Canteen',
+        location: 'Bangalore',
+        address: 'RUAS Campus, Peenya, Bangalore 560058',
+        contact: '+91 98765 43210',
+      })
+      .select('*')
+      .single();
+
+    business = newBusiness;
+  }
 
   if (!business) {
     return (
       <div className="max-w-md mx-auto mt-20 text-center space-y-4">
         <h2 className="text-xl font-semibold">Set Up Your Business</h2>
         <p className="text-muted-foreground text-sm">
-          Your business profile hasn&apos;t been created yet. Please contact support or seed your database.
+          Please reload or create a business profile to start managing surplus listings.
         </p>
       </div>
     );
@@ -43,12 +60,6 @@ export default async function BusinessDashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const { count: todayOrdersCount } = await supabase
-    .from('orders')
-    .select('*', { count: 'exact', head: true })
-    .eq('listing_id', business.id)
-    .gte('created_at', today.toISOString());
-
   // Fetch total remaining quantity across active listings
   const { data: activeListings } = await supabase
     .from('food_listings')
@@ -57,14 +68,14 @@ export default async function BusinessDashboardPage() {
     .eq('status', 'active')
     .gt('quantity', 0);
 
-  const mealsRemaining = activeListings?.reduce((sum, l) => sum + l.quantity, 0) ?? 0;
+  const mealsRemaining = activeListings?.reduce((sum, l) => sum + (l.quantity || 0), 0) ?? 0;
 
-  // Fetch recent orders count for today
+  // Fetch today's orders count for this business
   const { count: ordersToday } = await supabase
     .from('orders')
-    .select('orders.*, food_listings!inner(business_id)', { count: 'exact', head: true })
+    .select('id, food_listings!inner(business_id)', { count: 'exact', head: true })
     .eq('food_listings.business_id', business.id)
-    .gte('orders.created_at', today.toISOString());
+    .gte('created_at', today.toISOString());
 
   const impactStats = stats as {
     total_orders: number;

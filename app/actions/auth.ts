@@ -62,6 +62,34 @@ export async function signInAsDemo(role: 'customer' | 'business'): Promise<Actio
     };
   }
 
+  // Get user profile and ensure correct role
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    await supabase
+      .from('profiles')
+      .update({ role, name: role === 'business' ? 'Demo Business Owner' : 'Demo Customer' })
+      .eq('id', user.id);
+
+    if (role === 'business') {
+      // Ensure business record exists
+      const { data: existingBusiness } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (!existingBusiness) {
+        await supabase.from('businesses').insert({
+          owner_id: user.id,
+          name: 'RUAS Campus Canteen',
+          location: 'Bangalore',
+          address: 'RUAS Campus, Peenya, Bangalore 560058',
+          contact: '+91 98765 43210',
+        });
+      }
+    }
+  }
+
   redirect(role === 'business' ? '/business' : '/customer');
 }
 
