@@ -20,19 +20,32 @@ export default async function BusinessLayout({
 
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('role, name')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (profile?.role !== 'business') redirect('/customer');
+  // Fallback to auth metadata if profile row is not yet created
+  const effectiveRole = profile?.role || user.user_metadata?.role || 'business';
+
+  if (!profile) {
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      name: user.user_metadata?.name || 'Business Partner',
+      email: user.email || '',
+      role: effectiveRole,
+    });
+    profile = { role: effectiveRole, name: user.user_metadata?.name || 'Business Partner' };
+  }
+
+  if (effectiveRole !== 'business') redirect('/customer');
 
   const { data: business } = await supabase
     .from('businesses')
     .select('name')
     .eq('owner_id', user.id)
-    .single();
+    .maybeSingle();
 
   const businessName = business?.name ?? profile?.name ?? 'Your Business';
 

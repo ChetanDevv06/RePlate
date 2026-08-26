@@ -16,31 +16,65 @@ export async function signIn(formData: {
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: parsed.data.email,
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email.trim().toLowerCase(),
     password: parsed.data.password,
   });
 
   if (error) {
-    return { success: false, error: 'Invalid email or password. Please try again.' };
+    if (error.message.toLowerCase().includes('email not confirmed')) {
+      return {
+        success: false,
+        error: 'Please confirm your email address before signing in, or disable "Confirm email" in your Supabase Auth dashboard (Authentication -> Providers -> Email).',
+      };
+    }
+    return { success: false, error: error.message || 'Invalid email or password. Please try again.' };
   }
 
-  // Get user's role for redirect
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = authData.user;
   if (!user) {
     return { success: false, error: 'Authentication failed' };
   }
 
-  const { data: profile } = await supabase
+  // Get user profile
+  let { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, name')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  const redirectPath = profile?.role === 'business' ? '/business' : '/customer';
+  // Self-heal: If profile record is missing from table, create it from auth metadata
+  if (!profile) {
+    const userRole = (user.user_metadata?.role as 'customer' | 'business') || 'customer';
+    const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      name: userName,
+      email: user.email || '',
+      role: userRole,
+    });
+
+    if (userRole === 'business') {
+      const { data: existingBiz } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (!existingBiz) {
+        await supabase.from('businesses').insert({
+          owner_id: user.id,
+          name: user.user_metadata?.business_name || userName || 'My Business',
+          location: user.user_metadata?.location || 'Bangalore',
+        });
+      }
+    }
+
+    profile = { role: userRole, name: userName };
+  }
+
+  const redirectPath = profile.role === 'business' ? '/business' : '/customer';
   redirect(redirectPath);
 }
 
@@ -262,8 +296,11 @@ export async function signUpCustomer(formData: {
     return { success: false, error: 'Password must be at least 8 characters' };
   }
 
+  const cleanEmail = formData.email.trim().toLowerCase();
+
+  // 1. Sign up user in Supabase Auth with metadata
   const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: formData.email.trim().toLowerCase(),
+    email: cleanEmail,
     password: formData.password,
     options: {
       data: {
@@ -280,24 +317,36 @@ export async function signUpCustomer(formData: {
     return { success: false, error: authError.message || 'Unable to create account. Please try again.' };
   }
 
-  if (authData.user) {
-    // Upsert customer profile
-    await supabase.from('profiles').upsert({
-      id: authData.user.id,
-      name: trimmedName,
-      email: formData.email.trim().toLowerCase(),
-      role: 'customer',
-    });
-  }
-
-  // Automatically sign in to establish session cookies and proceed directly to dashboard
-  const { error: autoSignInError } = await supabase.auth.signInWithPassword({
-    email: formData.email.trim().toLowerCase(),
+  // 2. Sign in to establish active authenticated session context (sets auth.uid() for RLS)
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: cleanEmail,
     password: formData.password,
   });
 
-  if (autoSignInError) {
-    console.warn('Auto sign-in notice after customer registration:', autoSignInError);
+  if (signInError) {
+    if (signInError.message.toLowerCase().includes('email not confirmed')) {
+      return {
+        success: false,
+        error: 'Account created! Please check your email to confirm your account before signing in, or disable "Confirm email" in Supabase Auth settings.',
+      };
+    }
+    return { success: false, error: signInError.message || 'Failed to authenticate after registration.' };
+  }
+
+  const activeUserId = signInData.user?.id || authData.user?.id;
+
+  // 3. Insert/Upsert customer profile with authenticated permissions
+  if (activeUserId) {
+    const { error: profileErr } = await supabase.from('profiles').upsert({
+      id: activeUserId,
+      name: trimmedName,
+      email: cleanEmail,
+      role: 'customer',
+    });
+
+    if (profileErr) {
+      console.error('Error creating customer profile:', profileErr);
+    }
   }
 
   redirect('/customer');
@@ -336,13 +385,19 @@ export async function signUpBusiness(formData: {
     return { success: false, error: 'Password must be at least 8 characters' };
   }
 
+  const cleanEmail = formData.email.trim().toLowerCase();
+
+  // 1. Sign up user in Supabase Auth with metadata
   const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: formData.email.trim().toLowerCase(),
+    email: cleanEmail,
     password: formData.password,
     options: {
       data: {
         name: trimmedName,
         role: 'business',
+        business_name: trimmedBusinessName,
+        business_type: formData.businessType,
+        location: trimmedLocation,
       },
     },
   });
@@ -354,33 +409,58 @@ export async function signUpBusiness(formData: {
     return { success: false, error: authError.message || 'Unable to create business account. Please try again.' };
   }
 
-  if (authData.user) {
-    // Upsert business owner profile
-    await supabase.from('profiles').upsert({
-      id: authData.user.id,
-      name: trimmedName,
-      email: formData.email.trim().toLowerCase(),
-      role: 'business',
-    });
-
-    // Create business profile
-    await supabase.from('businesses').insert({
-      owner_id: authData.user.id,
-      name: trimmedBusinessName,
-      location: trimmedLocation,
-      address: formData.address?.trim() || null,
-      contact: formData.contact?.trim() || null,
-    });
-  }
-
-  // Automatically sign in to establish session cookies and proceed directly to dashboard
-  const { error: autoSignInError } = await supabase.auth.signInWithPassword({
-    email: formData.email.trim().toLowerCase(),
+  // 2. Sign in to establish active authenticated session context (sets auth.uid() for RLS)
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: cleanEmail,
     password: formData.password,
   });
 
-  if (autoSignInError) {
-    console.warn('Auto sign-in notice after business registration:', autoSignInError);
+  if (signInError) {
+    if (signInError.message.toLowerCase().includes('email not confirmed')) {
+      return {
+        success: false,
+        error: 'Account created! Please check your email to confirm your account before signing in, or disable "Confirm email" in Supabase Auth settings.',
+      };
+    }
+    return { success: false, error: signInError.message || 'Failed to authenticate after business registration.' };
+  }
+
+  const activeUserId = signInData.user?.id || authData.user?.id;
+
+  // 3. Insert/Upsert business profile & store record with authenticated permissions
+  if (activeUserId) {
+    // Upsert business owner profile
+    const { error: profileErr } = await supabase.from('profiles').upsert({
+      id: activeUserId,
+      name: trimmedName,
+      email: cleanEmail,
+      role: 'business',
+    });
+
+    if (profileErr) {
+      console.error('Error creating business owner profile:', profileErr);
+    }
+
+    // Check and create business store record
+    const { data: existingBiz } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('owner_id', activeUserId)
+      .maybeSingle();
+
+    if (!existingBiz) {
+      const { error: bizErr } = await supabase.from('businesses').insert({
+        owner_id: activeUserId,
+        name: trimmedBusinessName,
+        location: trimmedLocation,
+        address: formData.address?.trim() || null,
+        contact: formData.contact?.trim() || null,
+      });
+
+      if (bizErr) {
+        console.error('Error inserting business store record:', bizErr);
+      }
+    }
   }
 
   redirect('/business');

@@ -18,13 +18,26 @@ export default async function CustomerLayout({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('role, name')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (profile?.role !== 'customer') redirect('/business');
+  // Fallback to auth metadata if profile row is not yet created
+  const effectiveRole = profile?.role || user.user_metadata?.role || 'customer';
+
+  if (!profile) {
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      name: user.user_metadata?.name || 'Customer',
+      email: user.email || '',
+      role: effectiveRole,
+    });
+    profile = { role: effectiveRole, name: user.user_metadata?.name || 'Customer' };
+  }
+
+  if (effectiveRole !== 'customer') redirect('/business');
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

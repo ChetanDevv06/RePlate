@@ -17,9 +17,11 @@ export default async function LoginPage() {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profile?.role === 'business') {
+    const effectiveRole = profile?.role || user.user_metadata?.role || 'customer';
+
+    if (effectiveRole === 'business') {
       redirect('/business');
     } else {
       redirect('/customer');
