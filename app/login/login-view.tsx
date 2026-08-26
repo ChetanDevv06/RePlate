@@ -46,15 +46,42 @@ import {
   signUpBusiness,
   sendPasswordResetEmail,
 } from '@/app/actions/auth';
-import {
-  loginSchema,
-  customerSignUpSchema,
-  businessSignUpSchema,
-  type LoginFormData,
-  type CustomerSignUpFormData,
-  type BusinessSignUpFormData,
-} from '@/lib/validations';
+import { z } from 'zod';
 import { cn } from '@/lib/utils';
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+type LoginFormData = z.infer<typeof loginSchema>;
+
+const customerSignUpSchema = z.object({
+  name: z.string().trim().min(2, 'Full name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8, 'Please confirm your password'),
+  location: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+type CustomerSignUpFormData = z.infer<typeof customerSignUpSchema>;
+
+const businessSignUpSchema = z.object({
+  name: z.string().trim().min(2, 'Your name must be at least 2 characters'),
+  businessName: z.string().trim().min(2, 'Business name must be at least 2 characters'),
+  businessType: z.enum(['Restaurant', 'Café', 'Bakery', 'College Canteen', 'Other']),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8, 'Please confirm your password'),
+  location: z.string().trim().min(2, 'City / Area is required'),
+  address: z.string().optional(),
+  contact: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+type BusinessSignUpFormData = z.infer<typeof businessSignUpSchema>;
 
 export function LoginView() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
