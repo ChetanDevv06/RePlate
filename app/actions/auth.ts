@@ -290,6 +290,16 @@ export async function signUpCustomer(formData: {
     });
   }
 
+  // Automatically sign in to establish session cookies and proceed directly to dashboard
+  const { error: autoSignInError } = await supabase.auth.signInWithPassword({
+    email: formData.email.trim().toLowerCase(),
+    password: formData.password,
+  });
+
+  if (autoSignInError) {
+    console.warn('Auto sign-in notice after customer registration:', autoSignInError);
+  }
+
   redirect('/customer');
 }
 
@@ -361,6 +371,16 @@ export async function signUpBusiness(formData: {
       address: formData.address?.trim() || null,
       contact: formData.contact?.trim() || null,
     });
+  }
+
+  // Automatically sign in to establish session cookies and proceed directly to dashboard
+  const { error: autoSignInError } = await supabase.auth.signInWithPassword({
+    email: formData.email.trim().toLowerCase(),
+    password: formData.password,
+  });
+
+  if (autoSignInError) {
+    console.warn('Auto sign-in notice after business registration:', autoSignInError);
   }
 
   redirect('/business');
