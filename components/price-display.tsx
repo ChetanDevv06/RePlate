@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/constants';
 import { calculateDiscountPercentage } from '@/lib/calculations';

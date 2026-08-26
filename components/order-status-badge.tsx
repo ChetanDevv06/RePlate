@@ -1,5 +1,3 @@
-'use client';
-
 import { ORDER_STATUS_LABELS } from '@/lib/constants';
 import type { OrderStatus, ListingStatus } from '@/types';
 import { cn } from '@/lib/utils';
