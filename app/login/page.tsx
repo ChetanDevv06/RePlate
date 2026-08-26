@@ -65,13 +65,13 @@ export default function LoginPage() {
           </p>
           <div className="grid grid-cols-3 gap-4 pt-4">
             {[
-              { value: '10k+', label: 'Meals Rescued' },
-              { value: '₹8L+', label: 'Revenue Recovered' },
-              { value: '2.5T', label: 'Waste Avoided' },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/10 rounded-xl p-4">
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="text-xs text-green-200 mt-1">{stat.label}</div>
+              { title: 'Up to 50% Off', desc: 'Surplus food deals' },
+              { title: 'Same-Day', desc: 'Fresh local pickup' },
+              { title: 'Zero Waste', desc: 'For canteens & cafés' },
+            ].map((item) => (
+              <div key={item.title} className="bg-white/10 rounded-xl p-4">
+                <div className="text-lg font-bold">{item.title}</div>
+                <div className="text-xs text-green-200 mt-1">{item.desc}</div>
               </div>
             ))}
           </div>
