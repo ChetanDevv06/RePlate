@@ -65,7 +65,7 @@ export function PredictionCard({ originalPrice, onApplyRecommendation }: Predict
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label htmlFor="avg-sales" className="text-xs text-muted-foreground mb-1 block">
@@ -117,11 +117,17 @@ export function PredictionCard({ originalPrice, onApplyRecommendation }: Predict
             </div>
           </div>
 
-          <Button type="submit" size="sm" variant="outline" className="w-full text-xs h-8">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="w-full text-xs h-8"
+            onClick={handleSubmit(onSubmit)}
+          >
             Analyze Surplus Risk
             <ChevronRight className="size-3 ml-1" />
           </Button>
-        </form>
+        </div>
 
         {result && (
           <>
