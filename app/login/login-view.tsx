@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -98,9 +99,8 @@ export function LoginView() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotPending, setForgotPending] = useState(false);
 
-  // Info Dialogs (Privacy, Terms, Help)
+  // Info Dialogs (Help)
   const [helpOpen, setHelpOpen] = useState(false);
-  const [termsOpen, setTermsOpen] = useState(false);
 
   // 1. Sign In Form Hook
   const {
@@ -269,23 +269,33 @@ export function LoginView() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-emerald-300/70 border-t border-white/10 pt-6 z-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-emerald-300/70 border-t border-white/10 pt-6 z-10 gap-3">
           <p>© 2026 RePlate · Helping make food waste history.</p>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setTermsOpen(true)}
-              className="hover:text-white transition-colors"
+          <div className="flex items-center gap-3.5 text-[11px]">
+            <Link
+              href="/privacy"
+              className="hover:text-white transition-colors hover:underline"
             >
-              Privacy & Terms
-            </button>
-            <button
-              type="button"
-              onClick={() => setHelpOpen(true)}
-              className="hover:text-white transition-colors"
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="hover:text-white transition-colors hover:underline"
             >
-              Help
-            </button>
+              Terms
+            </Link>
+            <Link
+              href="/food-safety"
+              className="hover:text-white transition-colors hover:underline"
+            >
+              Food Safety
+            </Link>
+            <Link
+              href="/grievance"
+              className="hover:text-white transition-colors hover:underline"
+            >
+              Grievance
+            </Link>
           </div>
         </div>
       </div>
@@ -654,6 +664,17 @@ export function LoginView() {
                       >
                         {isPending ? 'Creating customer account...' : 'Create Customer Account'}
                       </Button>
+
+                      <p className="text-[11px] text-muted-foreground text-center pt-1 leading-relaxed">
+                        By signing up, you agree to RePlate&apos;s{' '}
+                        <Link href="/terms" className="text-primary hover:underline">
+                          Terms of Service
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/privacy" className="text-primary hover:underline">
+                          Privacy Policy
+                        </Link>.
+                      </p>
                     </form>
                   ) : (
                     /* Business Signup Form */
@@ -792,6 +813,17 @@ export function LoginView() {
                       >
                         {isPending ? 'Creating business account...' : 'Create Business Account'}
                       </Button>
+
+                      <p className="text-[11px] text-muted-foreground text-center pt-1 leading-relaxed">
+                        By registering your business, you agree to the{' '}
+                        <Link href="/business-terms" className="text-primary hover:underline">
+                          Business Partner Agreement
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/food-safety" className="text-primary hover:underline">
+                          Food Safety Standards
+                        </Link>.
+                      </p>
                     </form>
                   )}
                 </>
@@ -799,10 +831,27 @@ export function LoginView() {
             </CardContent>
           </Card>
 
-          {/* Trust Statement */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-            <ShieldCheck className="size-3.5 text-primary" />
-            <span>Your information stays private and secure.</span>
+          {/* Trust Statement & Legal Links */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs text-muted-foreground text-center">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-primary" />
+              <span>Safe, verified & DPDP compliant</span>
+            </div>
+            <span className="hidden sm:inline">·</span>
+            <div className="flex items-center gap-3 text-[11px]">
+              <Link href="/privacy" className="hover:text-primary transition-colors underline">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-primary transition-colors underline">
+                Terms
+              </Link>
+              <Link href="/food-safety" className="hover:text-primary transition-colors underline">
+                Food Safety
+              </Link>
+              <Link href="/grievance" className="hover:text-primary transition-colors underline">
+                Grievance
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -872,29 +921,6 @@ export function LoginView() {
           </div>
           <DialogFooter>
             <Button onClick={() => setHelpOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Terms & Privacy Dialog */}
-      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Privacy Policy & Food Safety Terms</DialogTitle>
-            <DialogDescription>Our platform commitment to safety and privacy.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2 text-xs md:text-sm text-muted-foreground max-h-60 overflow-y-auto pr-1">
-            <p className="font-semibold text-foreground">1. Surplus Food Integrity</p>
-            <p>
-              All food items listed on RePlate are certified by our partner restaurants and canteens as wholesome, safely handled, and within safe consumption windows.
-            </p>
-            <p className="font-semibold text-foreground">2. Account Security</p>
-            <p>
-              Authentication is handled securely via Supabase Auth with encrypted credentials.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setTermsOpen(false)}>I Understand</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

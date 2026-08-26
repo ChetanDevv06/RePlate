@@ -787,27 +787,71 @@ export function CustomerProfileView({ profile: initialProfile, stats }: Customer
 
       {/* Terms & Privacy Modal */}
       <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Privacy & Terms of Service</DialogTitle>
-            <DialogDescription>Our safety and privacy commitments.</DialogDescription>
+            <DialogTitle>Legal & Compliance Policies</DialogTitle>
+            <DialogDescription>
+              Review RePlate&apos;s statutory policies and consumer protections.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2 text-xs md:text-sm text-muted-foreground max-h-60 overflow-y-auto pr-1">
-            <p className="font-semibold text-foreground">1. Food Safety</p>
-            <p>
-              All participating businesses certify that surplus listings represent safe, edible food prepared under sanitary conditions and sold within safe consumption windows.
-            </p>
-            <p className="font-semibold text-foreground">2. Privacy Commitment</p>
-            <p>
-              We only store your account profile, order reservations, and pickup verification codes. Your data is never sold or shared with 3rd-party advertisers.
-            </p>
-            <p className="font-semibold text-foreground">3. Fair Pickup Policy</p>
-            <p>
-              Please collect reservations before the pickup deadline so businesses can close on schedule.
-            </p>
+          <div className="space-y-2 py-2 text-xs">
+            <Link
+              href="/privacy"
+              className="p-3 rounded-xl border flex items-center justify-between hover:bg-muted/50 transition-colors group"
+            >
+              <div>
+                <p className="font-semibold text-foreground group-hover:text-primary">Privacy Policy (DPDP Act)</p>
+                <p className="text-muted-foreground text-[11px]">How we protect your personal data</p>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              href="/terms"
+              className="p-3 rounded-xl border flex items-center justify-between hover:bg-muted/50 transition-colors group"
+            >
+              <div>
+                <p className="font-semibold text-foreground group-hover:text-primary">Terms of Service</p>
+                <p className="text-muted-foreground text-[11px]">Marketplace terms and user conditions</p>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              href="/food-safety"
+              className="p-3 rounded-xl border flex items-center justify-between hover:bg-muted/50 transition-colors group"
+            >
+              <div>
+                <p className="font-semibold text-foreground group-hover:text-primary">Food Safety & Hygiene</p>
+                <p className="text-muted-foreground text-[11px]">FSSAI guidelines and hygiene standards</p>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              href="/refunds"
+              className="p-3 rounded-xl border flex items-center justify-between hover:bg-muted/50 transition-colors group"
+            >
+              <div>
+                <p className="font-semibold text-foreground group-hover:text-primary">Refund & Cancellation Policy</p>
+                <p className="text-muted-foreground text-[11px]">Cancellation rules and refund processing</p>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              href="/grievance"
+              className="p-3 rounded-xl border flex items-center justify-between hover:bg-muted/50 transition-colors group"
+            >
+              <div>
+                <p className="font-semibold text-foreground group-hover:text-primary">Grievance Redressal Mechanism</p>
+                <p className="text-muted-foreground text-[11px]">Nodal Grievance Officer and escalation</p>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5" />
+            </Link>
           </div>
           <DialogFooter>
-            <Button onClick={() => setTermsOpen(false)}>I Understand</Button>
+            <Button className="w-full" onClick={() => setTermsOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
