@@ -42,12 +42,11 @@ export function DeleteListingButton({ listingId, listingName }: DeleteListingBut
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        render={
-          <button className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-input bg-background text-destructive hover:bg-destructive/10 hover:border-destructive transition-all text-sm" aria-label={`Delete ${listingName}`}>
-            <Trash2 className="size-3.5" />
-          </button>
-        }
-      />
+        className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-input bg-background text-destructive hover:bg-destructive/10 hover:border-destructive transition-all text-sm"
+        aria-label={`Delete ${listingName}`}
+      >
+        <Trash2 className="size-3.5" />
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Listing</DialogTitle>

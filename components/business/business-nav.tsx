@@ -128,10 +128,11 @@ export function BusinessMobileNav({ businessName }: BusinessNavProps) {
         )}
       </div>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger>
-          <button className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-transparent hover:bg-muted transition-all" aria-label="Open menu">
-            <Menu className="size-4" />
-          </button>
+        <SheetTrigger
+          className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-transparent hover:bg-muted transition-all"
+          aria-label="Open menu"
+        >
+          <Menu className="size-4" />
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-56">
           <NavLinks businessName={businessName} onClose={() => setOpen(false)} />
