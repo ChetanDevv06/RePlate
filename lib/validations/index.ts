@@ -105,3 +105,39 @@ export const changePasswordSchema = z.object({
 });
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+export const customerSignUpSchema = z.object({
+  name: z.string().trim().min(2, 'Full name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8, 'Please confirm your password'),
+  location: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
+export type CustomerSignUpFormData = z.infer<typeof customerSignUpSchema>;
+
+export const businessSignUpSchema = z.object({
+  name: z.string().trim().min(2, 'Your name must be at least 2 characters'),
+  businessName: z.string().trim().min(2, 'Business name must be at least 2 characters'),
+  businessType: z.enum(['Restaurant', 'Café', 'Bakery', 'College Canteen', 'Other']),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string().min(8, 'Please confirm your password'),
+  location: z.string().trim().min(2, 'City / Area is required'),
+  address: z.string().optional(),
+  contact: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
+export type BusinessSignUpFormData = z.infer<typeof businessSignUpSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;

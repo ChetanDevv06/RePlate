@@ -241,3 +241,143 @@ export async function updateBusinessProfile(formData: {
 
   return { success: true };
 }
+
+export async function signUpCustomer(formData: {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  location?: string;
+}): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const trimmedName = formData.name?.trim();
+  if (!trimmedName || trimmedName.length < 2) {
+    return { success: false, error: 'Full name must be at least 2 characters' };
+  }
+  if (!formData.email || !formData.email.includes('@')) {
+    return { success: false, error: 'Please enter a valid email address' };
+  }
+  if (!formData.password || formData.password.length < 8) {
+    return { success: false, error: 'Password must be at least 8 characters' };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: formData.email.trim().toLowerCase(),
+    password: formData.password,
+    options: {
+      data: {
+        name: trimmedName,
+        role: 'customer',
+      },
+    },
+  });
+
+  if (authError) {
+    if (authError.message.toLowerCase().includes('already registered') || authError.status === 422) {
+      return { success: false, error: 'An account with this email already exists. Please sign in.' };
+    }
+    return { success: false, error: authError.message || 'Unable to create account. Please try again.' };
+  }
+
+  if (authData.user) {
+    // Upsert customer profile
+    await supabase.from('profiles').upsert({
+      id: authData.user.id,
+      name: trimmedName,
+      email: formData.email.trim().toLowerCase(),
+      role: 'customer',
+    });
+  }
+
+  redirect('/customer');
+}
+
+export async function signUpBusiness(formData: {
+  name: string;
+  businessName: string;
+  businessType: string;
+  email: string;
+  password: string;
+  confirmPassword?: string;
+  location: string;
+  address?: string;
+  contact?: string;
+}): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const trimmedName = formData.name?.trim();
+  const trimmedBusinessName = formData.businessName?.trim();
+  const trimmedLocation = formData.location?.trim();
+
+  if (!trimmedName || trimmedName.length < 2) {
+    return { success: false, error: 'Your name must be at least 2 characters' };
+  }
+  if (!trimmedBusinessName || trimmedBusinessName.length < 2) {
+    return { success: false, error: 'Business name must be at least 2 characters' };
+  }
+  if (!trimmedLocation || trimmedLocation.length < 2) {
+    return { success: false, error: 'City / Area location is required' };
+  }
+  if (!formData.email || !formData.email.includes('@')) {
+    return { success: false, error: 'Please enter a valid email address' };
+  }
+  if (!formData.password || formData.password.length < 8) {
+    return { success: false, error: 'Password must be at least 8 characters' };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: formData.email.trim().toLowerCase(),
+    password: formData.password,
+    options: {
+      data: {
+        name: trimmedName,
+        role: 'business',
+      },
+    },
+  });
+
+  if (authError) {
+    if (authError.message.toLowerCase().includes('already registered') || authError.status === 422) {
+      return { success: false, error: 'An account with this email already exists. Please sign in.' };
+    }
+    return { success: false, error: authError.message || 'Unable to create business account. Please try again.' };
+  }
+
+  if (authData.user) {
+    // Upsert business owner profile
+    await supabase.from('profiles').upsert({
+      id: authData.user.id,
+      name: trimmedName,
+      email: formData.email.trim().toLowerCase(),
+      role: 'business',
+    });
+
+    // Create business profile
+    await supabase.from('businesses').insert({
+      owner_id: authData.user.id,
+      name: trimmedBusinessName,
+      location: trimmedLocation,
+      address: formData.address?.trim() || null,
+      contact: formData.contact?.trim() || null,
+    });
+  }
+
+  redirect('/business');
+}
+
+export async function sendPasswordResetEmail(email: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  if (!email || !email.includes('@')) {
+    return { success: false, error: 'Please enter a valid email address' };
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+
+  if (error) {
+    return { success: false, error: 'Unable to send reset email. Please try again.' };
+  }
+
+  return { success: true };
+}
