@@ -25,7 +25,7 @@ export const createListingSchema = z.object({
   quantity: z
     .number({ error: 'Enter a valid quantity' })
     .int('Quantity must be a whole number')
-    .positive('Quantity must be at least 1'),
+    .min(0, 'Quantity cannot be negative'),
   pickup_start: z.string().min(1, 'Pickup start time is required'),
   pickup_deadline: z.string().min(1, 'Pickup deadline is required'),
   description: z.string().max(500, 'Description must be under 500 characters').optional(),

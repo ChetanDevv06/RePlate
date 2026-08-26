@@ -50,9 +50,9 @@ export function ListingForm({ initialData, mode = 'create', onSubmit: onSubmitPr
     resolver: zodResolver(createListingSchema),
     defaultValues: {
       name: initialData?.name ?? '',
-      original_price: initialData?.original_price ?? undefined,
-      discounted_price: initialData?.discounted_price ?? undefined,
-      quantity: initialData?.quantity ?? undefined,
+      original_price: initialData?.original_price !== undefined ? Number(initialData.original_price) : undefined,
+      discounted_price: initialData?.discounted_price !== undefined ? Number(initialData.discounted_price) : undefined,
+      quantity: initialData?.quantity !== undefined ? Number(initialData.quantity) : undefined,
       pickup_start: initialData?.pickup_start
         ? toDatetimeLocal(new Date(initialData.pickup_start))
         : defaultPickupStart,

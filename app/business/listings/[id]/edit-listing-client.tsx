@@ -17,6 +17,7 @@ export function EditListingClient({ listing }: EditListingClientProps) {
   const handleSubmit = async (data: CreateListingFormData & { image_url?: string }) => {
     const result = await updateListing(listing.id, {
       ...data,
+      image_url: data.image_url !== undefined ? data.image_url : (listing.image_url ?? undefined),
       pickup_start: new Date(data.pickup_start).toISOString(),
       pickup_deadline: new Date(data.pickup_deadline).toISOString(),
     });
